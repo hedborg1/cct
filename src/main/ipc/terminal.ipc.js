@@ -11,8 +11,9 @@ const crypto = require('crypto');
  * Register all terminal-related IPC handlers
  * @param {import('../services/TerminalService').TerminalService} terminalService
  * @param {import('../services/ProjectConfigService').ProjectConfigService} projectConfigService
+ * @param {import('../services/ConfigService').ConfigService} [configService]
  */
-function registerTerminalIPC(terminalService, projectConfigService) {
+function registerTerminalIPC(terminalService, projectConfigService, configService) {
   // Map<terminalId, { projectPath, sessionId }> for cleanup on kill/exit
   const sessionMap = new Map();
 
@@ -30,6 +31,13 @@ function registerTerminalIPC(terminalService, projectConfigService) {
     const isClaude = type === 'claude';
     const claudeSessionId = isClaude ? (resumeId || crypto.randomUUID()) : undefined;
 
+    // Resolve command from config hierarchy (project → global → default)
+    let command = params.command;
+    if (!command && configService) {
+      const key = isClaude ? 'claudeCommand' : 'terminalCommand';
+      command = configService.resolve(key, cwd) || undefined;
+    }
+
     // Build extra env vars
     const env = {};
     if (cwd && projectConfigService) {
@@ -41,7 +49,7 @@ function registerTerminalIPC(terminalService, projectConfigService) {
     // Build args for claude: --session-id on first spawn, --resume on restore
     // Only add these when actually spawning the claude binary, not when CCT_COMMAND overrides to a shell
     let args = params.args || [];
-    const isActuallyClaude = isClaude && (!params.command || params.command === 'claude');
+    const isActuallyClaude = isClaude && (!command || command === 'claude');
     if (isActuallyClaude && claudeSessionId) {
       if (resumeId) {
         args = ['--resume', claudeSessionId, ...args];
@@ -58,7 +66,7 @@ function registerTerminalIPC(terminalService, projectConfigService) {
       sessionMap.delete(id);
     };
 
-    const result = terminalService.create({ ...params, args, env, onExit });
+    const result = terminalService.create({ ...params, command, args, env, onExit });
 
     // Record session in .cct/sessions.json
     if (cwd && projectConfigService) {

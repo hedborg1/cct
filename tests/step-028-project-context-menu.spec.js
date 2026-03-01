@@ -50,10 +50,11 @@ test('1 - project context menu items are correct', async () => {
     return window._cctGetProjectContextMenuItems(dir);
   }, tmpDir);
 
-  expect(items).toHaveLength(3);
+  expect(items).toHaveLength(4);
   expect(items[0].label).toBe('Reveal in Finder');
   expect(items[1].label).toBe('Copy Path');
-  expect(items[2].label).toBe('Remove Project');
+  expect(items[2].label).toBe('Project Settings…');
+  expect(items[3].label).toBe('Remove Project');
 });
 
 test('2 - shell.showItemInFolder API is available', async () => {

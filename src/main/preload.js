@@ -70,5 +70,15 @@ contextBridge.exposeInMainWorld('electron_api', {
     configPath: () => ipcRenderer.invoke('project-config-path'),
     getSessions: (projectPath) => ipcRenderer.invoke('get-project-sessions', projectPath),
     clearSessions: (projectPath) => ipcRenderer.invoke('clear-project-sessions', projectPath)
+  },
+
+  appConfig: {
+    getSchema: () => ipcRenderer.invoke('config-get-schema'),
+    getGlobal: () => ipcRenderer.invoke('config-get-global'),
+    setGlobal: (values) => ipcRenderer.invoke('config-set-global', values),
+    getProject: (projectPath) => ipcRenderer.invoke('config-get-project', projectPath),
+    setProject: (projectPath, values) => ipcRenderer.invoke('config-set-project', { projectPath, values }),
+    resolve: (key, projectPath) => ipcRenderer.invoke('config-resolve', { key, projectPath }),
+    resolveAll: (projectPath) => ipcRenderer.invoke('config-resolve-all', projectPath),
   }
 });

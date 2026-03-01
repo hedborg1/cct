@@ -35,6 +35,8 @@ if (!gotTheLock) {
   const { ProjectStore } = require('./src/main/services/ProjectStore');
   const { ProjectConfigService } = require('./src/main/services/ProjectConfigService');
   const { registerProjectIPC } = require('./src/main/ipc/project.ipc');
+  const { ConfigService } = require('./src/main/services/ConfigService');
+  const { registerConfigIPC } = require('./src/main/ipc/config.ipc');
   const { WindowStateService } = require('./src/main/services/WindowStateService');
   const { installHooks, removeHooks } = require('./src/main/services/HooksService');
   const { UpdaterService } = require('./src/main/services/UpdaterService');
@@ -55,10 +57,12 @@ if (!gotTheLock) {
     terminalService = new TerminalService(win);
     setTerminalService(terminalService);
     const projectConfigService = new ProjectConfigService();
-    registerTerminalIPC(terminalService, projectConfigService);
+    const configService = new ConfigService();
+    registerTerminalIPC(terminalService, projectConfigService, configService);
 
     const projectStore = new ProjectStore();
     registerProjectIPC(projectStore, projectConfigService);
+    registerConfigIPC(configService);
 
     // Window state IPC
     ipcMain.handle('get-version', () => app.getVersion());

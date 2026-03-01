@@ -52,6 +52,7 @@ const DEFAULT_KEYBINDINGS = {
   'Meta+a': 'selectAll',
   'Meta+b': 'toggleSidebar',
   'Shift+Meta+W': 'closeOtherTabs',
+  'Meta+,': 'openSettings',
   'Meta+/': 'showShortcutHelp',
   'Meta+1': 'goToTab1',
   'Meta+2': 'goToTab2',
@@ -293,7 +294,6 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
   sessionCounter++;
   const num = countSessionsForProject(project.path) + 1;
   const isClaude = type === 'claude';
-  const command = isClaude ? (api.config?.spawnCommand || 'claude') : undefined;
 
   const panelEl = document.createElement('div');
   panelEl.className = 'terminal-panel';
@@ -315,7 +315,6 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
   terminal.open(panelEl);
 
   const createParams = {
-    command,
     cols: terminal.cols,
     rows: terminal.rows,
     cwd: project.path,
@@ -788,6 +787,8 @@ async function showProjectContextMenu(projectPath) {
     { label: 'Reveal in Finder', action: 'revealInFinder' },
     { label: 'Copy Path', action: 'copyPath' },
     { type: 'separator' },
+    { label: 'Project Settings…', action: 'projectSettings' },
+    { type: 'separator' },
     { label: 'Remove Project', action: 'remove' },
   ]);
 
@@ -797,6 +798,10 @@ async function showProjectContextMenu(projectPath) {
       break;
     case 'copyPath':
       api.clipboard.writeText(projectPath);
+      break;
+    case 'projectSettings':
+      selectProject(projectPath);
+      openSettings();
       break;
     case 'remove':
       removeProject(projectPath);
@@ -1099,6 +1104,7 @@ const ACTION_LABELS = {
   selectAll: 'Select All',
   toggleSidebar: 'Pin/Unpin Sidebar',
   closeOtherTabs: 'Close Other Tabs',
+  openSettings: 'Settings',
   showShortcutHelp: 'Show Shortcuts',
   goToTab1: 'Go to Tab 1',
   goToTab2: 'Go to Tab 2',
@@ -1177,6 +1183,198 @@ function closeShortcutHelp() {
   if (!shortcutHelpOverlay) return;
   shortcutHelpOverlay.remove();
   shortcutHelpOverlay = null;
+  refocusTerminal();
+}
+
+// ── Settings overlay (Cmd+,) ─────────────────────────────────
+
+let settingsOverlay = null;
+
+async function openSettings() {
+  if (settingsOverlay) { closeSettings(); return; }
+
+  const [schema, globalConfig, projectConfig] = await Promise.all([
+    api.appConfig.getSchema(),
+    api.appConfig.getGlobal(),
+    selectedProjectPath ? api.appConfig.getProject(selectedProjectPath) : Promise.resolve(null),
+  ]);
+
+  settingsOverlay = document.createElement('div');
+  settingsOverlay.className = 'overlay settings-overlay';
+  settingsOverlay.dataset.testid = 'settings-overlay';
+
+  const panel = document.createElement('div');
+  panel.className = 'overlay-panel settings-panel';
+
+  // Title
+  const title = document.createElement('h2');
+  title.className = 'settings-title';
+  title.textContent = 'Settings';
+  panel.appendChild(title);
+
+  // Tab bar: Global / Project
+  const tabBar = document.createElement('div');
+  tabBar.className = 'settings-tabs';
+
+  const globalTab = document.createElement('button');
+  globalTab.className = 'settings-tab active';
+  globalTab.dataset.testid = 'settings-tab-global';
+  globalTab.textContent = 'Global';
+
+  const projectTab = document.createElement('button');
+  projectTab.className = 'settings-tab';
+  projectTab.dataset.testid = 'settings-tab-project';
+  const projectName = selectedProjectPath
+    ? projects.find(p => p.path === selectedProjectPath)?.name || 'Project'
+    : 'Project';
+  projectTab.textContent = projectName;
+  projectTab.disabled = !selectedProjectPath;
+
+  tabBar.appendChild(globalTab);
+  tabBar.appendChild(projectTab);
+  panel.appendChild(tabBar);
+
+  // Content area
+  const content = document.createElement('div');
+  content.className = 'settings-content';
+  panel.appendChild(content);
+
+  let activeTab = 'global';
+
+  function renderSettingsContent() {
+    content.innerHTML = '';
+    const isProject = activeTab === 'project';
+    const values = isProject ? (projectConfig || {}) : globalConfig;
+
+    for (const [key, schemaDef] of Object.entries(schema)) {
+      const row = document.createElement('div');
+      row.className = 'settings-row';
+
+      const label = document.createElement('label');
+      label.className = 'settings-label';
+      label.textContent = schemaDef.label;
+      row.appendChild(label);
+
+      const desc = document.createElement('div');
+      desc.className = 'settings-description';
+      desc.textContent = schemaDef.description;
+      row.appendChild(desc);
+
+      const inputRow = document.createElement('div');
+      inputRow.className = 'settings-input-row';
+
+      const input = document.createElement('input');
+      input.className = 'settings-input';
+      input.dataset.testid = `settings-input-${key}`;
+      input.type = 'text';
+
+      if (isProject) {
+        // Show project value if set, otherwise show global/default as placeholder
+        const projectValue = values[key];
+        const globalValue = globalConfig[key] ?? schemaDef.default;
+        input.value = projectValue !== undefined ? projectValue : '';
+        input.placeholder = globalValue || schemaDef.default || '(default)';
+
+        // Clear button for project overrides
+        if (projectValue !== undefined) {
+          const clearBtn = document.createElement('button');
+          clearBtn.className = 'settings-clear-btn';
+          clearBtn.dataset.testid = `settings-clear-${key}`;
+          clearBtn.textContent = '\u00d7';
+          clearBtn.title = 'Use global default';
+          clearBtn.addEventListener('click', () => {
+            delete projectConfig[key];
+            input.value = '';
+            clearBtn.remove();
+          });
+          inputRow.appendChild(clearBtn);
+        }
+      } else {
+        // Global: show set value or empty with default as placeholder
+        input.value = values[key] !== undefined ? values[key] : '';
+        input.placeholder = schemaDef.default || '(default)';
+      }
+
+      input.addEventListener('input', () => {
+        const trimmed = input.value.trim();
+        if (trimmed) {
+          values[key] = trimmed;
+        } else {
+          delete values[key];
+        }
+      });
+
+      inputRow.insertBefore(input, inputRow.firstChild);
+      row.appendChild(inputRow);
+      content.appendChild(row);
+    }
+
+    // Save button
+    const actions = document.createElement('div');
+    actions.className = 'settings-actions';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'settings-save-btn';
+    saveBtn.dataset.testid = 'settings-save-btn';
+    saveBtn.textContent = 'Save';
+    saveBtn.addEventListener('click', async () => {
+      if (isProject && selectedProjectPath) {
+        await api.appConfig.setProject(selectedProjectPath, projectConfig);
+      } else {
+        await api.appConfig.setGlobal(globalConfig);
+      }
+      closeSettings();
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'settings-cancel-btn';
+    cancelBtn.dataset.testid = 'settings-cancel-btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => closeSettings());
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+    content.appendChild(actions);
+  }
+
+  globalTab.addEventListener('click', () => {
+    activeTab = 'global';
+    globalTab.classList.add('active');
+    projectTab.classList.remove('active');
+    renderSettingsContent();
+  });
+
+  projectTab.addEventListener('click', () => {
+    if (!selectedProjectPath) return;
+    activeTab = 'project';
+    projectTab.classList.add('active');
+    globalTab.classList.remove('active');
+    renderSettingsContent();
+  });
+
+  renderSettingsContent();
+
+  settingsOverlay.appendChild(panel);
+  settingsOverlay.addEventListener('mousedown', (e) => {
+    if (e.target === settingsOverlay) closeSettings();
+  });
+  settingsOverlay.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      closeSettings();
+    }
+  });
+
+  document.querySelector('.app').appendChild(settingsOverlay);
+  settingsOverlay.tabIndex = -1;
+  settingsOverlay.focus();
+}
+
+function closeSettings() {
+  if (!settingsOverlay) return;
+  settingsOverlay.remove();
+  settingsOverlay = null;
   refocusTerminal();
 }
 
@@ -1340,6 +1538,7 @@ window._cctGetProjectContextMenuItems = (projectPath) => {
   return [
     { label: 'Reveal in Finder', action: 'revealInFinder' },
     { label: 'Copy Path', action: 'copyPath' },
+    { label: 'Project Settings…', action: 'projectSettings' },
     { label: 'Remove Project', action: 'remove' },
   ];
 };
@@ -1490,6 +1689,7 @@ async function init() {
   actions.set('selectAll', selectAll);
   actions.set('toggleSidebar', toggleSidebar);
   actions.set('closeOtherTabs', () => { if (activeId !== null) closeOtherTabs(activeId); });
+  actions.set('openSettings', openSettings);
   actions.set('showShortcutHelp', showShortcutHelp);
   for (let i = 1; i <= 8; i++) {
     actions.set(`goToTab${i}`, () => goToTab(i - 1));
