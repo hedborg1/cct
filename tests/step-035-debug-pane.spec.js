@@ -97,3 +97,41 @@ test('5 - debug pane is resizable via drag handle', async () => {
   const newHeight = await window.evaluate(() => document.querySelector('[data-testid="debug-pane"]').offsetHeight);
   expect(newHeight).toBeGreaterThan(200);
 });
+
+test('6 - log entries appear in the debug pane', async () => {
+  // Make sure pane is open
+  const isOpen = await window.evaluate(() => document.querySelector('[data-testid="debug-pane"]').classList.contains('open'));
+  if (!isOpen) await window.keyboard.press('Meta+j');
+  await window.waitForTimeout(100);
+
+  // Add a test log entry via test helper
+  await window.evaluate(() => {
+    window._cctAddDebugEntry({ timestamp: Date.now(), level: 'info', source: 'test', message: 'Hello from test' });
+  });
+
+  const entries = await window.evaluate(() =>
+    document.querySelectorAll('[data-testid="debug-pane-entries"] .debug-entry').length
+  );
+  expect(entries).toBeGreaterThanOrEqual(1);
+
+  const text = await window.evaluate(() =>
+    document.querySelector('[data-testid="debug-pane-entries"]').textContent
+  );
+  expect(text).toContain('Hello from test');
+});
+
+test('7 - clear button removes all entries', async () => {
+  // Add an entry first
+  await window.evaluate(() => {
+    window._cctAddDebugEntry({ timestamp: Date.now(), level: 'warn', source: 'test', message: 'Warning entry' });
+  });
+
+  // Click clear
+  await window.click('[data-testid="debug-pane-clear-btn"]');
+  await window.waitForTimeout(100);
+
+  const entries = await window.evaluate(() =>
+    document.querySelectorAll('[data-testid="debug-pane-entries"] .debug-entry').length
+  );
+  expect(entries).toBe(0);
+});

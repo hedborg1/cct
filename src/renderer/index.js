@@ -1583,6 +1583,59 @@ function initDebugPaneResize() {
   });
 }
 
+// ── Debug pane entries ───────────────────────────────────────
+
+let debugAutoScroll = true;
+
+function formatLogTime(timestamp) {
+  const d = new Date(timestamp);
+  return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function addDebugEntry(entry) {
+  if (!debugPaneEntriesEl) return;
+
+  const row = document.createElement('div');
+  row.className = `debug-entry level-${entry.level}`;
+
+  const time = document.createElement('span');
+  time.className = 'debug-entry-time';
+  time.textContent = formatLogTime(entry.timestamp);
+
+  const source = document.createElement('span');
+  source.className = 'debug-entry-source';
+  source.textContent = `[${entry.source}]`;
+
+  const msg = document.createElement('span');
+  msg.className = 'debug-entry-message';
+  msg.textContent = entry.message;
+
+  row.append(time, source, msg);
+  debugPaneEntriesEl.appendChild(row);
+
+  updateDebugPaneCount();
+
+  // Auto-scroll if user hasn't scrolled up
+  if (debugAutoScroll) {
+    debugPaneEntriesEl.scrollTop = debugPaneEntriesEl.scrollHeight;
+  }
+}
+
+function updateDebugPaneCount() {
+  if (debugPaneCountEl) {
+    const count = debugPaneEntriesEl.querySelectorAll('.debug-entry').length;
+    debugPaneCountEl.textContent = count > 0 ? `(${count})` : '';
+  }
+}
+
+function clearDebugPane() {
+  if (debugPaneEntriesEl) {
+    debugPaneEntriesEl.innerHTML = '';
+    updateDebugPaneCount();
+  }
+  if (api.log) api.log.clear();
+}
+
 // ── Test helpers ─────────────────────────────────────────────
 
 window._cctGetBufferText = (targetId) => {
@@ -1653,6 +1706,7 @@ window._cctReloadProjects = (projectList) => {
 window._cctSelectProject = (projectPath) => {
   selectProject(projectPath);
 };
+window._cctAddDebugEntry = addDebugEntry;
 
 // ── Keybindings ──────────────────────────────────────────────
 
@@ -1743,6 +1797,26 @@ async function init() {
       debugPaneResizeHandle.classList.add('visible');
     }
   }
+
+  // Wire up debug pane
+  if (api.log) {
+    // Load history
+    const history = await api.log.getHistory();
+    for (const entry of history) addDebugEntry(entry);
+
+    // Stream new entries
+    api.log.onEntry((entry) => addDebugEntry(entry));
+  }
+
+  // Clear button
+  document.querySelector('[data-testid="debug-pane-clear-btn"]')
+    .addEventListener('click', clearDebugPane);
+
+  // Track scroll position for auto-scroll behavior
+  debugPaneEntriesEl.addEventListener('scroll', () => {
+    const { scrollTop, scrollHeight, clientHeight } = debugPaneEntriesEl;
+    debugAutoScroll = scrollTop + clientHeight >= scrollHeight - 10;
+  });
 
   // Sidebar: add project button
   document.querySelector('[data-testid="add-project-btn"]')
