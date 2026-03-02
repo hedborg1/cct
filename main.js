@@ -117,6 +117,10 @@ if (!gotTheLock) {
     ipcMain.handle('get-window-state-path', () => windowStateService.configPath);
     ipcMain.handle('get-font-size', () => windowStateService.fontSize);
     ipcMain.on('set-font-size', (_event, size) => { windowStateService.fontSize = size; });
+    ipcMain.handle('get-debug-pane-height', () => windowStateService.debugPaneHeight);
+    ipcMain.on('set-debug-pane-height', (_event, h) => { windowStateService.debugPaneHeight = h; });
+    ipcMain.handle('get-debug-pane-open', () => windowStateService.debugPaneOpen);
+    ipcMain.on('set-debug-pane-open', (_event, open) => { windowStateService.debugPaneOpen = open; });
 
     // Shell IPC
     ipcMain.handle('shell-show-item-in-folder', (_event, fullPath) => shell.showItemInFolder(fullPath));

@@ -32,3 +32,10 @@ test('1 - log history IPC returns array', async () => {
   const history = await window.evaluate(() => window.electron_api.log.getHistory());
   expect(Array.isArray(history)).toBe(true);
 });
+
+test('2 - debug pane state defaults are persisted', async () => {
+  const height = await window.evaluate(() => window.electron_api.windowState.getDebugPaneHeight());
+  const open = await window.evaluate(() => window.electron_api.windowState.getDebugPaneOpen());
+  expect(height).toBe(200);
+  expect(open).toBe(false);
+});

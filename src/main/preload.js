@@ -39,6 +39,10 @@ contextBridge.exposeInMainWorld('electron_api', {
     getFontSize: () => ipcRenderer.invoke('get-font-size'),
     setFontSize: (size) => ipcRenderer.send('set-font-size', size),
     getConfigPath: () => ipcRenderer.invoke('get-window-state-path'),
+    getDebugPaneHeight: () => ipcRenderer.invoke('get-debug-pane-height'),
+    setDebugPaneHeight: (h) => ipcRenderer.send('set-debug-pane-height', h),
+    getDebugPaneOpen: () => ipcRenderer.invoke('get-debug-pane-open'),
+    setDebugPaneOpen: (open) => ipcRenderer.send('set-debug-pane-open', open),
   },
 
   contextMenu: {

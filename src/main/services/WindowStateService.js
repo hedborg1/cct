@@ -16,6 +16,8 @@ const DEFAULTS = {
   sidebarWidth: 220,
   sidebarMode: 'pinned',
   fontSize: 14,
+  debugPaneHeight: 200,
+  debugPaneOpen: false,
 };
 
 class WindowStateService {
@@ -129,6 +131,24 @@ class WindowStateService {
 
   set fontSize(value) {
     this._state.fontSize = value;
+    this._debouncedSave();
+  }
+
+  get debugPaneHeight() {
+    return this._state.debugPaneHeight;
+  }
+
+  set debugPaneHeight(value) {
+    this._state.debugPaneHeight = value;
+    this._debouncedSave();
+  }
+
+  get debugPaneOpen() {
+    return this._state.debugPaneOpen;
+  }
+
+  set debugPaneOpen(value) {
+    this._state.debugPaneOpen = value;
     this._debouncedSave();
   }
 
