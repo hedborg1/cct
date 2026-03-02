@@ -180,7 +180,29 @@ test('12 - cancel button closes without saving', async () => {
   expect(config.claudeCommand).toBe('my-custom-claude');
 });
 
-test('13 - config schema is available via IPC', async () => {
+test('13 - clearing a global config value removes it from config.json', async () => {
+  // Precondition: claudeCommand is set from test 6
+  const configPath = path.join(env.CCT_USER_DATA, 'config.json');
+  let config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  expect(config.claudeCommand).toBe('my-custom-claude');
+
+  // Open settings, clear the value, save
+  await window.keyboard.press('Meta+,');
+  await window.waitForSelector('[data-testid="settings-overlay"]', { timeout: 3000 });
+
+  const claudeInput = window.locator('[data-testid="settings-input-claudeCommand"]');
+  await claudeInput.fill('');
+
+  await window.locator('[data-testid="settings-save-btn"]').click();
+  await expect(window.locator('[data-testid="settings-overlay"]')).not.toBeAttached({ timeout: 3000 });
+
+  // Verify the key is gone from config.json
+  await window.waitForTimeout(300);
+  config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  expect(config).not.toHaveProperty('claudeCommand');
+});
+
+test('14 - config schema is available via IPC', async () => {
   const schema = await window.evaluate(() => window.electron_api.appConfig.getSchema());
   expect(schema).toHaveProperty('claudeCommand');
   expect(schema).toHaveProperty('terminalCommand');

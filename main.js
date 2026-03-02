@@ -7,19 +7,20 @@ const path = require('path');
 const fs = require('fs');
 
 
-// Fix PATH on macOS — apps launched from Finder have a minimal PATH
+// Fix PATH on macOS — apps launched from Finder have a minimal PATH.
+// Must be synchronous so process.env.PATH is set before any PTY spawns.
 if (process.platform === 'darwin') {
-  const { execFile } = require('child_process');
-  const userShell = process.env.SHELL || '/bin/zsh';
-  execFile(userShell, ['-lc', 'echo $PATH'], {
-    encoding: 'utf8',
-    timeout: 5000,
-  }, (err, stdout) => {
-    if (!err && stdout) {
-      const shellPath = stdout.trim();
-      if (shellPath) process.env.PATH = shellPath;
-    }
-  });
+  try {
+    const { execFileSync } = require('child_process');
+    const userShell = process.env.SHELL || '/bin/zsh';
+    const shellPath = execFileSync(userShell, ['-lc', 'echo $PATH'], {
+      encoding: 'utf8',
+      timeout: 5000,
+    }).trim();
+    if (shellPath) process.env.PATH = shellPath;
+  } catch {
+    // Fall back to minimal PATH if shell execution fails
+  }
 }
 
 /**

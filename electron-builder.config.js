@@ -2,7 +2,8 @@ module.exports = {
   appId: "com.cct.app",
   productName: "CCT",
   directories: {
-    output: "dist"
+    output: "dist",
+    buildResources: "build"
   },
   files: [
     "main.js",
@@ -18,7 +19,8 @@ module.exports = {
   mac: {
     target: ["dmg", "zip"],
     category: "public.app-category.developer-tools",
-    darkModeSupport: true
+    darkModeSupport: true,
+    icon: "build/icon.icns"
   },
   dmg: {
     background: null,

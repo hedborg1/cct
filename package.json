@@ -1,6 +1,6 @@
 {
   "name": "cct",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "Claude Code Terminal - A Terminal Development Environment",
   "main": "main.js",
   "bin": {
@@ -11,6 +11,7 @@
     "lint": "echo 'lint: ok'",
     "build": "node scripts/build-renderer.js && electron-builder --config electron-builder.config.js --dir",
     "build:renderer": "node scripts/build-renderer.js",
+    "build:icons": "node scripts/generate-icons.js",
     "build:dist": "node scripts/build-renderer.js && electron-builder --config electron-builder.config.js",
     "test": "node scripts/build-renderer.js && npx playwright test",
     "postinstall": "electron-builder install-app-deps"
@@ -27,7 +28,8 @@
     "@playwright/test": "^1.50.0",
     "electron": "^40.6.1",
     "electron-builder": "^26.8.1",
-    "esbuild": "^0.27.3"
+    "esbuild": "^0.27.3",
+    "sharp": "^0.34.5"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",
