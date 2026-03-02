@@ -78,3 +78,22 @@ test('4 - Cmd+J toggles debug pane open and closed', async () => {
   height = await window.evaluate(() => document.querySelector('[data-testid="debug-pane"]').offsetHeight);
   expect(height).toBe(0);
 });
+
+test('5 - debug pane is resizable via drag handle', async () => {
+  // Open the pane first
+  const isOpen = await window.evaluate(() => document.querySelector('[data-testid="debug-pane"]').classList.contains('open'));
+  if (!isOpen) await window.keyboard.press('Meta+j');
+  await window.waitForTimeout(100);
+
+  const handle = await window.$('[data-testid="debug-pane-resize-handle"]');
+  const box = await handle.boundingBox();
+
+  // Drag upward (increases pane height)
+  await window.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await window.mouse.down();
+  await window.mouse.move(box.x + box.width / 2, box.y - 50);
+  await window.mouse.up();
+
+  const newHeight = await window.evaluate(() => document.querySelector('[data-testid="debug-pane"]').offsetHeight);
+  expect(newHeight).toBeGreaterThan(200);
+});

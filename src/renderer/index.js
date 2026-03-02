@@ -1536,6 +1536,53 @@ function toggleDebugPane() {
   }
 }
 
+// ── Debug pane resize ────────────────────────────────────────
+
+function initDebugPaneResize() {
+  const MIN_HEIGHT = 80;
+
+  let isDragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  debugPaneResizeHandle.addEventListener('mousedown', (e) => {
+    if (!debugPaneOpen) return;
+    isDragging = true;
+    startY = e.clientY;
+    startHeight = debugPaneEl.offsetHeight;
+    debugPaneResizeHandle.classList.add('dragging');
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const mainArea = document.querySelector('.main-area');
+    const maxHeight = Math.floor(mainArea.offsetHeight * 0.5);
+    const delta = startY - e.clientY; // dragging up increases height
+    const newHeight = Math.max(MIN_HEIGHT, Math.min(maxHeight, startHeight + delta));
+    debugPaneEl.style.height = newHeight + 'px';
+    // Refit active terminal
+    if (activeId) {
+      const session = sessions.get(activeId);
+      if (session) session.fitAddon.fit();
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    debugPaneResizeHandle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    debugPaneHeight = debugPaneEl.offsetHeight;
+    if (api.windowState) {
+      api.windowState.setDebugPaneHeight(debugPaneHeight);
+    }
+  });
+}
+
 // ── Test helpers ─────────────────────────────────────────────
 
 window._cctGetBufferText = (targetId) => {
@@ -1766,6 +1813,7 @@ async function init() {
   document.querySelector('[data-testid="new-tab-btn"]').addEventListener('click', () => createSession('claude'));
 
   initSidebarResize();
+  initDebugPaneResize();
   initSidebarAutoHide();
 
   // Enable sidebar transitions after first paint to prevent slide-on-load
