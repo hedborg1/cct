@@ -145,11 +145,13 @@ if (!gotTheLock) {
     // Customize native application menu
     const menu = Menu.getApplicationMenu();
 
-    // Disable Cmd+W — renderer handles it as tab-close
+    // Disable native Cmd+W and Cmd+N — renderer handles them as tab-close and new-session
     const fileMenu = menu?.items.find(i => i.role === 'fileMenu' || i.label === 'File');
     if (fileMenu) {
       const closeItem = fileMenu.submenu?.items.find(i => i.role === 'close');
       if (closeItem) closeItem.enabled = false;
+      const newWindowItem = fileMenu.submenu?.items.find(i => i.accelerator === 'CmdOrCtrl+N' || i.label === 'New Window');
+      if (newWindowItem) newWindowItem.enabled = false;
     }
 
     // Add "Check for Updates…" to the app menu (after About)

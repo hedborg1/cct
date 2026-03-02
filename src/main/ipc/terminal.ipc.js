@@ -32,8 +32,8 @@ function registerTerminalIPC(terminalService, projectConfigService, configServic
     const claudeSessionId = isClaude ? (resumeId || crypto.randomUUID()) : undefined;
 
     // Resolve command from config hierarchy (project → global → default)
-    // CCT_COMMAND env var overrides everything (used by tests to stub the claude binary)
-    let command = params.command || process.env.CCT_COMMAND;
+    // CCT_COMMAND env var overrides in test mode only (when CCT_USER_DATA is set)
+    let command = params.command || (process.env.CCT_USER_DATA && process.env.CCT_COMMAND);
     if (!command && configService) {
       const key = isClaude ? 'claudeCommand' : 'terminalCommand';
       command = configService.resolve(key, cwd) || undefined;
