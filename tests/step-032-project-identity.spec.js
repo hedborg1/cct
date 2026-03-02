@@ -82,7 +82,7 @@ test('2 - different project names get different palette indices', async () => {
   expect(result).toBeGreaterThanOrEqual(3);
 });
 
-test('3 - titlebar shows project name when project is selected', async () => {
+test('3 - tabs are integrated into the titlebar', async () => {
   const tmpDir = await addTempProject('titlebar');
 
   // Click the project to select it
@@ -90,20 +90,18 @@ test('3 - titlebar shows project name when project is selected', async () => {
   await projectItem.click();
   await window.waitForTimeout(300);
 
-  const titlebarName = window.locator('[data-testid="titlebar-project-name"]');
-  await expect(titlebarName).toBeVisible({ timeout: 5000 });
+  // Tab bar should be the titlebar-drag-region itself
+  const tabBar = window.locator('[data-testid="tab-bar"]');
+  await expect(tabBar).toBeVisible({ timeout: 5000 });
 
-  // Should contain the folder name (last segment of path)
-  const text = await titlebarName.textContent();
-  expect(text.toLowerCase()).toContain('titlebar');
+  // The titlebar should contain .titlebar-tabs
+  const titlebarTabs = window.locator('.titlebar-tabs');
+  await expect(titlebarTabs).toBeVisible();
 });
 
-test('4 - titlebar shows monogram with project initial', async () => {
-  const monogram = window.locator('[data-testid="titlebar-monogram"]');
-  await expect(monogram).toBeVisible();
-  const text = await monogram.textContent();
-  // Should be a single uppercase letter
-  expect(text).toMatch(/^[A-Z]$/);
+test('4 - new tab button is in the titlebar', async () => {
+  const newTabBtn = window.locator('[data-testid="new-tab-btn"]');
+  await expect(newTabBtn).toBeVisible();
 });
 
 test('5 - CSS custom properties are set when project is selected', async () => {
@@ -135,9 +133,11 @@ test('7 - different projects get color from their name', async () => {
   expect(result.different).toBe(true);
 });
 
-test('8 - titlebar is empty when no project is selected', async () => {
+test('8 - accent is cleared when no project is selected', async () => {
   await clearAllProjects();
 
-  const titlebarName = window.locator('[data-testid="titlebar-project-name"]');
-  await expect(titlebarName).toHaveText('', { timeout: 5000 });
+  const accent = await window.evaluate(() => {
+    return getComputedStyle(document.documentElement).getPropertyValue('--project-accent').trim();
+  });
+  expect(accent).toBe('');
 });

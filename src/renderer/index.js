@@ -76,8 +76,6 @@ let tabBarTabs;
 let sidebarProjectsEl;
 let sidebarEl;
 let emptyStateEl;
-let titlebarMonogram;
-let titlebarProjectName;
 let debugPaneEl;
 let debugPaneEntriesEl;
 let debugPaneCountEl;
@@ -88,17 +86,58 @@ let debugPaneHeight = 200;
 // Project list (synced with ProjectStore via IPC)
 const projects = [];
 
+// ── Theme helpers ────────────────────────────────────────────
+
+const DARK_TERMINAL_THEME = {
+  background: '#1a1714',
+  foreground: '#e8e0d4',
+  cursor: '#e8e0d4',
+  selectionBackground: 'rgba(212, 148, 60, 0.25)',
+};
+
+const LIGHT_TERMINAL_THEME = {
+  background: '#f5f5f7',
+  foreground: '#1a1a1a',
+  cursor: '#1a1a1a',
+  selectionBackground: 'rgba(0, 102, 204, 0.2)',
+};
+
+function getCurrentThemeMode() {
+  const attr = document.documentElement.getAttribute('data-theme');
+  if (attr === 'dark' || attr === 'light') return attr;
+  // system: check OS preference
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function getTerminalTheme() {
+  return getCurrentThemeMode() === 'light' ? LIGHT_TERMINAL_THEME : DARK_TERMINAL_THEME;
+}
+
+function applyThemeSetting(theme) {
+  const root = document.documentElement;
+  if (theme === 'dark' || theme === 'light') {
+    root.setAttribute('data-theme', theme);
+  } else {
+    // 'system' — remove attribute so CSS @media kicks in
+    root.removeAttribute('data-theme');
+  }
+  // Sync xterm terminals
+  const xtermTheme = getTerminalTheme();
+  TERMINAL_OPTIONS.theme = xtermTheme;
+  document.documentElement.style.setProperty('--terminal-bg', xtermTheme.background);
+  for (const sess of sessions.values()) {
+    sess.terminal.options.theme = xtermTheme;
+  }
+  // Update project accent colors for the new theme
+  updateProjectIdentity();
+}
+
 const TERMINAL_OPTIONS = {
   allowProposedApi: true,
   cursorBlink: true,
   fontSize: 14,
   fontFamily: "'Menlo', 'Monaco', 'Courier New', 'Symbols Nerd Font Mono', monospace",
-  theme: {
-    background: '#1a1a2e',
-    foreground: '#e0e0e0',
-    cursor: '#e0e0e0',
-    selectionBackground: 'rgba(255, 255, 255, 0.2)'
-  }
+  theme: DARK_TERMINAL_THEME,
 };
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -212,8 +251,6 @@ function selectProject(projectPath) {
 
 function updateProjectIdentity() {
   if (!selectedProjectPath) {
-    if (titlebarMonogram) titlebarMonogram.style.display = 'none';
-    if (titlebarProjectName) titlebarProjectName.textContent = '';
     const root = document.documentElement;
     root.style.removeProperty('--project-accent');
     root.style.removeProperty('--project-accent-bg');
@@ -226,21 +263,16 @@ function updateProjectIdentity() {
   if (!project) return;
 
   const color = getProjectColor(project.name);
-  const accent = `hsl(${color.hue}, ${color.s}%, ${color.l}%)`;
+  const isLight = getCurrentThemeMode() === 'light';
+  const accent = `hsl(${color.hue}, ${color.s}%, ${isLight ? Math.max(color.l - 10, 30) : color.l}%)`;
 
   const root = document.documentElement;
   root.style.setProperty('--project-accent', accent);
-  root.style.setProperty('--project-accent-bg', `hsl(${color.hue}, 40%, 15%)`);
-  root.style.setProperty('--project-accent-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.15)`);
-  root.style.setProperty('--project-accent-border', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.3)`);
-
-  if (titlebarMonogram) {
-    titlebarMonogram.style.display = 'flex';
-    titlebarMonogram.textContent = project.name.charAt(0).toUpperCase();
-  }
-  if (titlebarProjectName) {
-    titlebarProjectName.textContent = project.name;
-  }
+  root.style.setProperty('--project-accent-bg', isLight
+    ? `hsl(${color.hue}, 30%, 92%)`
+    : `hsl(${color.hue}, 40%, 15%)`);
+  root.style.setProperty('--project-accent-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, ${isLight ? 0.12 : 0.15})`);
+  root.style.setProperty('--project-accent-border', `hsla(${color.hue}, ${color.s}%, ${color.l}%, ${isLight ? 0.25 : 0.3})`);
 }
 
 /** Get all session [id, session] entries for a given project path */
@@ -1284,48 +1316,90 @@ async function openSettings() {
       const inputRow = document.createElement('div');
       inputRow.className = 'settings-input-row';
 
-      const input = document.createElement('input');
-      input.className = 'settings-input';
-      input.dataset.testid = `settings-input-${key}`;
-      input.type = 'text';
+      let inputEl;
 
-      if (isProject) {
-        // Show project value if set, otherwise show global/default as placeholder
-        const projectValue = values[key];
-        const globalValue = globalConfig[key] ?? schemaDef.default;
-        input.value = projectValue !== undefined ? projectValue : '';
-        input.placeholder = globalValue || schemaDef.default || '(default)';
+      if (schemaDef.type === 'select') {
+        const select = document.createElement('select');
+        select.className = 'settings-select';
+        select.dataset.testid = `settings-input-${key}`;
 
-        // Clear button for project overrides
-        if (projectValue !== undefined) {
-          const clearBtn = document.createElement('button');
-          clearBtn.className = 'settings-clear-btn';
-          clearBtn.dataset.testid = `settings-clear-${key}`;
-          clearBtn.textContent = '\u00d7';
-          clearBtn.title = 'Use global default';
-          clearBtn.addEventListener('click', () => {
-            delete projectConfig[key];
-            input.value = '';
-            clearBtn.remove();
-          });
-          inputRow.appendChild(clearBtn);
+        for (const opt of schemaDef.options) {
+          const option = document.createElement('option');
+          option.value = opt;
+          option.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+          select.appendChild(option);
         }
+
+        if (isProject) {
+          const projectValue = values[key];
+          const globalValue = globalConfig[key] ?? schemaDef.default;
+          select.value = projectValue !== undefined ? projectValue : globalValue;
+
+          if (projectValue !== undefined) {
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'settings-clear-btn';
+            clearBtn.dataset.testid = `settings-clear-${key}`;
+            clearBtn.textContent = '\u00d7';
+            clearBtn.title = 'Use global default';
+            clearBtn.addEventListener('click', () => {
+              delete projectConfig[key];
+              select.value = globalValue;
+              clearBtn.remove();
+            });
+            inputRow.appendChild(clearBtn);
+          }
+        } else {
+          select.value = values[key] !== undefined ? values[key] : schemaDef.default;
+        }
+
+        select.addEventListener('change', () => {
+          values[key] = select.value;
+        });
+
+        inputEl = select;
       } else {
-        // Global: show set value or empty with default as placeholder
-        input.value = values[key] !== undefined ? values[key] : '';
-        input.placeholder = schemaDef.default || '(default)';
+        const input = document.createElement('input');
+        input.className = 'settings-input';
+        input.dataset.testid = `settings-input-${key}`;
+        input.type = 'text';
+
+        if (isProject) {
+          const projectValue = values[key];
+          const globalValue = globalConfig[key] ?? schemaDef.default;
+          input.value = projectValue !== undefined ? projectValue : '';
+          input.placeholder = globalValue || schemaDef.default || '(default)';
+
+          if (projectValue !== undefined) {
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'settings-clear-btn';
+            clearBtn.dataset.testid = `settings-clear-${key}`;
+            clearBtn.textContent = '\u00d7';
+            clearBtn.title = 'Use global default';
+            clearBtn.addEventListener('click', () => {
+              delete projectConfig[key];
+              input.value = '';
+              clearBtn.remove();
+            });
+            inputRow.appendChild(clearBtn);
+          }
+        } else {
+          input.value = values[key] !== undefined ? values[key] : '';
+          input.placeholder = schemaDef.default || '(default)';
+        }
+
+        input.addEventListener('input', () => {
+          const trimmed = input.value.trim();
+          if (trimmed) {
+            values[key] = trimmed;
+          } else {
+            delete values[key];
+          }
+        });
+
+        inputEl = input;
       }
 
-      input.addEventListener('input', () => {
-        const trimmed = input.value.trim();
-        if (trimmed) {
-          values[key] = trimmed;
-        } else {
-          delete values[key];
-        }
-      });
-
-      inputRow.insertBefore(input, inputRow.firstChild);
+      inputRow.insertBefore(inputEl, inputRow.firstChild);
       row.appendChild(inputRow);
       content.appendChild(row);
     }
@@ -1344,6 +1418,9 @@ async function openSettings() {
       } else {
         await api.appConfig.setGlobal(globalConfig);
       }
+      // Apply theme immediately
+      const resolvedTheme = await api.appConfig.resolve('theme', selectedProjectPath);
+      applyThemeSetting(resolvedTheme || 'system');
       closeSettings();
     });
 
@@ -1725,7 +1802,7 @@ function normalizeKeyEvent(e) {
 
 async function init() {
   terminalsContainer = document.getElementById('terminals');
-  tabBarTabs = document.querySelector('.tab-bar-tabs');
+  tabBarTabs = document.querySelector('.titlebar-tabs');
   sidebarProjectsEl = document.querySelector('[data-testid="project-list"]');
   sidebarEl = document.querySelector('[data-testid="sidebar"]');
   emptyStateEl = document.querySelector('[data-testid="empty-state"]');
@@ -1733,8 +1810,6 @@ async function init() {
   debugPaneEntriesEl = document.querySelector('[data-testid="debug-pane-entries"]');
   debugPaneCountEl = document.querySelector('[data-testid="debug-pane-count"]');
   debugPaneResizeHandle = document.querySelector('[data-testid="debug-pane-resize-handle"]');
-  titlebarMonogram = document.querySelector('[data-testid="titlebar-monogram"]');
-  titlebarProjectName = document.querySelector('[data-testid="titlebar-project-name"]');
 
   // Status bar elements
   statusProjectEl = document.querySelector('[data-testid="status-project"]');
@@ -1787,6 +1862,25 @@ async function init() {
       currentFontSize = savedFontSize;
       TERMINAL_OPTIONS.fontSize = currentFontSize;
     }
+
+    // Apply theme setting
+    const resolvedTheme = await api.appConfig.resolve('theme', null);
+    applyThemeSetting(resolvedTheme || 'system');
+
+    // Listen for OS theme changes (relevant when theme is 'system')
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+      if (!document.documentElement.hasAttribute('data-theme')) {
+        // System mode — re-sync xterm themes
+        const xtermTheme = getTerminalTheme();
+        TERMINAL_OPTIONS.theme = xtermTheme;
+        document.documentElement.style.setProperty('--terminal-bg', xtermTheme.background);
+        for (const sess of sessions.values()) {
+          sess.terminal.options.theme = xtermTheme;
+        }
+        updateProjectIdentity();
+      }
+    });
+
     // Restore debug pane state
     const savedDebugHeight = await api.windowState.getDebugPaneHeight();
     if (savedDebugHeight && savedDebugHeight > 0) debugPaneHeight = savedDebugHeight;
