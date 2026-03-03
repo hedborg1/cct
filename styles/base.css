@@ -8,6 +8,7 @@
 /* ── Theme tokens ─────────────────────────────────────────────── */
 
 :root, [data-theme="dark"] {
+  --sidebar-width: 220px;
   --bg-app: #1a1714;
   --bg-surface: #231f1a;
   --bg-overlay: #2a2520;
@@ -167,6 +168,8 @@ html, body {
   height: 100%;
   overflow-x: auto;
   -webkit-app-region: no-drag;
+  margin-left: calc(var(--sidebar-width) - 74px - 28px);
+  transition: margin-left 0.2s ease;
 }
 
 /* App body — horizontal split */

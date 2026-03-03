@@ -1042,6 +1042,7 @@ function toggleSidebar() {
     appBody.classList.add('sidebar-autohide', 'sidebar-transitions');
     sidebarEl.classList.remove('sidebar-revealed');
     sidebarEl.style.width = '0';
+    document.documentElement.style.setProperty('--sidebar-width', '0px');
     sidebarRevealed = false;
   } else {
     // Switch to pinned — restore sidebar width
@@ -1053,6 +1054,7 @@ function toggleSidebar() {
     appBody.classList.remove('sidebar-autohide');
     sidebarEl.classList.remove('sidebar-revealed');
     sidebarEl.style.width = sidebarWidth + 'px';
+    document.documentElement.style.setProperty('--sidebar-width', sidebarWidth + 'px');
     sidebarRevealed = false;
   }
 
@@ -1589,6 +1591,7 @@ function initSidebarResize() {
     const delta = e.clientX - startX;
     const newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, startWidth + delta));
     sidebarEl.style.width = newWidth + 'px';
+    document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
     // Refit active terminal
     if (activeId) {
       const session = sessions.get(activeId);
@@ -1605,6 +1608,7 @@ function initSidebarResize() {
     // Persist sidebar width and update local variable
     const finalWidth = Math.round(sidebarEl.getBoundingClientRect().width);
     sidebarWidth = finalWidth;
+    document.documentElement.style.setProperty('--sidebar-width', finalWidth + 'px');
     if (api.windowState) {
       api.windowState.setSidebarWidth(finalWidth);
     }
@@ -1873,9 +1877,11 @@ async function init() {
     if (sidebarMode === 'pinned') {
       document.querySelector('.app-body').classList.remove('sidebar-autohide');
       sidebarEl.style.width = sidebarWidth + 'px';
+      document.documentElement.style.setProperty('--sidebar-width', sidebarWidth + 'px');
     } else {
       // Autohide: collapse to 0
       sidebarEl.style.width = '0';
+      document.documentElement.style.setProperty('--sidebar-width', '0px');
     }
     const savedFontSize = await api.windowState.getFontSize();
     if (savedFontSize && savedFontSize >= MIN_FONT_SIZE && savedFontSize <= MAX_FONT_SIZE) {
