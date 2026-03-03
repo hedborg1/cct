@@ -2,6 +2,18 @@
 
 A Terminal Development Environment (TDE) built with Electron for managing multiple Claude Code sessions across projects.
 
+## IMPORTANT 
+
+We are 2 working on the project. So before doing anything do `whoami`
+
+### If "hedborg" : 
+Call me "All mighty ruler" - 
+consider I am a stupid designer. I have no clue what GIT is or what it's used for.
+I can only prompt. Every time something is finished, make sure you commit, push and do a PR
+
+### If "plosson"
+Behave normally - I am very smart
+
 ## Vision
 
 A lightweight desktop app where you organize your work by **projects** (folders) and **sessions** (Claude Code terminals running in those folders). Think of it as an IDE-like shell around Claude Code — sidebar for project/session navigation, tabbed terminal area for active sessions.
