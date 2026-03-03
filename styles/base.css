@@ -377,12 +377,18 @@ html, body {
 }
 
 .tab-icon {
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   border-radius: 3px;
   flex-shrink: 0;
+}
+
+.tab-icon svg {
+  width: 12px;
+  height: 12px;
 }
 
 .tab-icon-claude {

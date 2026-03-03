@@ -386,9 +386,11 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
 
   const { id, sessionId } = await api.terminal.create(createParams);
 
+  const claudeSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12" shape-rendering="crispEdges"><rect x="2" y="4" width="12" height="2" fill="currentColor"/><rect x="1" y="6" width="2" height="2" fill="currentColor"/><rect x="5" y="6" width="6" height="2" fill="currentColor"/><rect x="13" y="6" width="2" height="2" fill="currentColor"/><rect x="1" y="8" width="14" height="1" fill="currentColor"/><rect x="2" y="9" width="12" height="3" fill="currentColor"/><rect x="2" y="12" width="1" height="2" fill="currentColor"/><rect x="4" y="12" width="1" height="2" fill="currentColor"/><rect x="11" y="12" width="1" height="2" fill="currentColor"/><rect x="13" y="12" width="1" height="2" fill="currentColor"/></svg>`;
+  const termSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,5 8,8 4,11"/><line x1="9" y1="11" x2="12" y2="11"/></svg>`;
   const icon = isClaude
-    ? '<span class="tab-icon tab-icon-claude">CC</span>'
-    : '<span class="tab-icon tab-icon-terminal">T</span>';
+    ? `<span class="tab-icon tab-icon-claude">${claudeSvg}</span>`
+    : `<span class="tab-icon tab-icon-terminal">${termSvg}</span>`;
   const displayLabel = `${project.name} ${num}`;
 
   const tabEl = document.createElement('div');
