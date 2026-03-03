@@ -355,6 +355,8 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
 
   const panelEl = document.createElement('div');
   panelEl.className = 'terminal-panel';
+  const color = getProjectColor(project.name);
+  panelEl.style.borderTop = `2px solid hsl(${color.hue}, ${color.s}%, ${color.l}%)`;
   terminalsContainer.appendChild(panelEl);
 
   const terminal = new Terminal({ ...TERMINAL_OPTIONS, fontSize: currentFontSize });
