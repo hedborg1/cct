@@ -140,7 +140,24 @@ html, body {
   align-items: center;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
-  padding-left: 78px;
+  padding-left: 74px;
+}
+
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--text-primary);
 }
 
 .titlebar-tabs {
@@ -254,7 +271,9 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: 5px 8px;
+  margin: 1px 8px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
   color: var(--text-secondary);
@@ -268,7 +287,6 @@ html, body {
 .sidebar-project.selected {
   background: var(--active-bg);
   color: var(--text-primary);
-  border-left: 3px solid var(--accent);
 }
 
 .sidebar-project-name {
@@ -358,12 +376,14 @@ html, body {
   white-space: nowrap;
   user-select: none;
   -webkit-app-region: no-drag;
-  border-right: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-bottom: none;
   box-sizing: border-box;
 }
 
-.tab-item:last-child {
-  border-right: none;
+.tab-item:first-child {
+  border-left: 1px solid var(--border);
 }
 
 .tab-item:hover {
@@ -377,12 +397,18 @@ html, body {
 }
 
 .tab-icon {
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   border-radius: 3px;
   flex-shrink: 0;
+}
+
+.tab-icon svg {
+  width: 12px;
+  height: 12px;
 }
 
 .tab-icon-claude {
@@ -919,6 +945,40 @@ html, body {
   color: var(--text-faint);
   font-size: 14px;
   user-select: none;
+}
+
+.empty-state-sessions {
+  display: flex;
+  gap: 16px;
+}
+
+.ess-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 32px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+.ess-card:hover { background: var(--bg-hover); }
+
+.ess-icon svg { width: 40px; height: 40px; }
+
+.ess-label { font-size: 13px; }
+
+.ess-kbd {
+  font-size: 11px;
+  color: var(--text-faint);
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: inherit;
 }
 
 /* Debug pane */

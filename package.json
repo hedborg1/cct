@@ -7,7 +7,7 @@
     "cct": "bin/cct"
   },
   "scripts": {
-    "start": "node scripts/build-renderer.js && electron .",
+    "start": "node scripts/build-renderer.js && electron . $PWD",
     "lint": "echo 'lint: ok'",
     "build": "node scripts/build-renderer.js && electron-builder --config electron-builder.config.js --dir",
     "build:renderer": "node scripts/build-renderer.js",

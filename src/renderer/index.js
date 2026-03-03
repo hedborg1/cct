@@ -170,8 +170,22 @@ function getEmptyStateMessage() {
 
 function updateEmptyState() {
   const message = getEmptyStateMessage();
-  emptyStateEl.style.display = message ? 'flex' : 'none';
-  if (message) emptyStateEl.textContent = message;
+  if (!message) {
+    emptyStateEl.style.display = 'none';
+    return;
+  }
+  emptyStateEl.style.display = 'flex';
+  const msgEl = emptyStateEl.querySelector('.empty-state-msg');
+  const sessionsEl = emptyStateEl.querySelector('.empty-state-sessions');
+  const isNoSessions = selectedProjectPath && countSessionsForProject(selectedProjectPath) === 0;
+  if (isNoSessions) {
+    msgEl.style.display = 'none';
+    sessionsEl.style.display = 'flex';
+  } else {
+    msgEl.textContent = message;
+    msgEl.style.display = '';
+    sessionsEl.style.display = 'none';
+  }
 }
 
 // ── Sidebar ──────────────────────────────────────────────────
@@ -372,9 +386,11 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
 
   const { id, sessionId } = await api.terminal.create(createParams);
 
+  const claudeSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12" shape-rendering="crispEdges"><rect x="2" y="4" width="12" height="2" fill="currentColor"/><rect x="1" y="6" width="2" height="2" fill="currentColor"/><rect x="5" y="6" width="6" height="2" fill="currentColor"/><rect x="13" y="6" width="2" height="2" fill="currentColor"/><rect x="1" y="8" width="14" height="1" fill="currentColor"/><rect x="2" y="9" width="12" height="3" fill="currentColor"/><rect x="2" y="12" width="1" height="2" fill="currentColor"/><rect x="4" y="12" width="1" height="2" fill="currentColor"/><rect x="11" y="12" width="1" height="2" fill="currentColor"/><rect x="13" y="12" width="1" height="2" fill="currentColor"/></svg>`;
+  const termSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,5 8,8 4,11"/><line x1="9" y1="11" x2="12" y2="11"/></svg>`;
   const icon = isClaude
-    ? '<span class="tab-icon tab-icon-claude">CC</span>'
-    : '<span class="tab-icon tab-icon-terminal">T</span>';
+    ? `<span class="tab-icon tab-icon-claude">${claudeSvg}</span>`
+    : `<span class="tab-icon tab-icon-terminal">${termSvg}</span>`;
   const displayLabel = `${project.name} ${num}`;
 
   const tabEl = document.createElement('div');
@@ -1955,6 +1971,9 @@ async function init() {
   actions.set('moveTabRight', () => moveTab('right'));
   actions.set('selectAll', selectAll);
   actions.set('toggleSidebar', toggleSidebar);
+
+  // Sidebar toggle button in titlebar
+  document.querySelector('.sidebar-toggle-btn')?.addEventListener('click', toggleSidebar);
   actions.set('closeOtherTabs', () => { if (activeId !== null) closeOtherTabs(activeId); });
   actions.set('openSettings', openSettings);
   actions.set('showShortcutHelp', showShortcutHelp);
@@ -1976,6 +1995,9 @@ async function init() {
   });
 
   document.querySelector('[data-testid="new-tab-btn"]').addEventListener('click', () => createSession('claude'));
+
+  document.querySelector('.ess-card[data-action="claude"]').addEventListener('click', () => createSession('claude'));
+  document.querySelector('.ess-card[data-action="terminal"]').addEventListener('click', () => createSession('terminal'));
 
   initSidebarResize();
   initDebugPaneResize();
