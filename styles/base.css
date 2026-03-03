@@ -140,7 +140,24 @@ html, body {
   align-items: center;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
-  padding-left: 78px;
+  padding-left: 74px;
+}
+
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--text-primary);
 }
 
 .titlebar-tabs {

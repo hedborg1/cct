@@ -1971,6 +1971,9 @@ async function init() {
   actions.set('moveTabRight', () => moveTab('right'));
   actions.set('selectAll', selectAll);
   actions.set('toggleSidebar', toggleSidebar);
+
+  // Sidebar toggle button in titlebar
+  document.querySelector('.sidebar-toggle-btn')?.addEventListener('click', toggleSidebar);
   actions.set('closeOtherTabs', () => { if (activeId !== null) closeOtherTabs(activeId); });
   actions.set('openSettings', openSettings);
   actions.set('showShortcutHelp', showShortcutHelp);
