@@ -4,6 +4,19 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Select release type'
+        required: true
+        type: choice
+        options:
+          - dev
+          - release-patch
+          - release-minor
+          # Disabled: Major releases require careful coordination and are difficult to unpublish
+          # - release-major
+        default: 'dev'
 
 permissions:
   contents: write
@@ -20,12 +33,46 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+
+      - name: Configure git
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        if: github.event_name == 'workflow_dispatch'
+        id: bump
+        run: |
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          if [ "$RELEASE_TYPE" = "dev" ]; then
+            # Dev build: append -dev.<timestamp> suffix, no git tag
+            DEV_SUFFIX="dev.$(date +%Y%m%d%H%M%S)"
+            NEW_VERSION="${CURRENT_VERSION}-${DEV_SUFFIX}"
+            npm version "$NEW_VERSION" --no-git-tag-version
+            echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+            echo "is_dev=true" >> "$GITHUB_OUTPUT"
+          else
+            # Release build: bump patch or minor, commit and tag
+            BUMP_TYPE="${RELEASE_TYPE#release-}"
+            NEW_VERSION=$(npm version "$BUMP_TYPE" -m "chore: bump version to %s")
+            echo "version=${NEW_VERSION#v}" >> "$GITHUB_OUTPUT"
+            echo "is_dev=false" >> "$GITHUB_OUTPUT"
+            git push origin main --follow-tags
+          fi
+
+          echo "New version: $(node -p "require('./package.json').version")"
 
       - name: Install dependencies
         run: npm ci
@@ -34,9 +81,29 @@ jobs:
         run: npm run build:renderer
 
       - name: Build and publish (zip + dmg)
+        if: github.event_name == 'push' || steps.bump.outputs.is_dev == 'false'
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 20
           max_attempts: 3
           retry_wait_seconds: 15
           command: npx electron-builder --mac zip dmg --arm64 --publish always --config electron-builder.config.js
+
+      - name: Build dev (no publish)
+        if: steps.bump.outputs.is_dev == 'true'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          retry_wait_seconds: 15
+          command: npx electron-builder --mac zip dmg --arm64 --config electron-builder.config.js
+
+      - name: Upload dev artifacts
+        if: steps.bump.outputs.is_dev == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cct-dev-${{ steps.bump.outputs.version }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          retention-days: 7
