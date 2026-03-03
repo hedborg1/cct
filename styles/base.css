@@ -255,7 +255,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 5px 8px;
-  margin: 1px 6px;
+  margin: 1px 8px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
@@ -359,12 +359,14 @@ html, body {
   white-space: nowrap;
   user-select: none;
   -webkit-app-region: no-drag;
-  border-right: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-bottom: none;
   box-sizing: border-box;
 }
 
-.tab-item:last-child {
-  border-right: none;
+.tab-item:first-child {
+  border-left: 1px solid var(--border);
 }
 
 .tab-item:hover {
