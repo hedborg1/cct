@@ -89,9 +89,9 @@ const projects = [];
 // ── Theme helpers ────────────────────────────────────────────
 
 const DARK_TERMINAL_THEME = {
-  background: '#1a1714',
-  foreground: '#e8e0d4',
-  cursor: '#e8e0d4',
+  background: '#111111',
+  foreground: '#d4d4d4',
+  cursor: '#d4d4d4',
   selectionBackground: 'rgba(212, 148, 60, 0.25)',
   scrollbarSliderBackground: 'rgba(255, 255, 255, 0.2)',
   scrollbarSliderHoverBackground: 'rgba(255, 255, 255, 0.35)',
@@ -142,7 +142,7 @@ const TERMINAL_OPTIONS = {
   allowProposedApi: true,
   cursorBlink: true,
   fontSize: 14,
-  fontFamily: "'Menlo', 'Monaco', 'Courier New', 'Symbols Nerd Font Mono', monospace",
+  fontFamily: "'Fira Code', 'Menlo', 'Monaco', 'Courier New', 'Symbols Nerd Font Mono', monospace",
   theme: DARK_TERMINAL_THEME,
 };
 
@@ -170,8 +170,8 @@ function updateAppGlow(projectNameOrPath) {
   const proj = projects.find(p => p.path === projectNameOrPath);
   const name = proj ? proj.name : projectNameOrPath;
   const color = getProjectColor(name);
-  appEl.style.setProperty('--glow-color', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.35)`);
-  appEl.style.setProperty('--glow-color-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.15)`);
+  appEl.style.setProperty('--glow-color', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.55)`);
+  appEl.style.setProperty('--glow-color-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.25)`);
   appEl.classList.add('has-glow');
 }
 
@@ -197,6 +197,24 @@ function updateEmptyState() {
   if (isNoSessions) {
     msgEl.style.display = 'none';
     sessionsEl.style.display = 'flex';
+    // Color empty state cards with project color
+    const proj = projects.find(p => p.path === selectedProjectPath);
+    if (proj) {
+      const c = getProjectColor(proj.name);
+      const col = `hsl(${c.hue}, ${c.s}%, ${c.l}%)`;
+      const colBg = `hsla(${c.hue}, ${c.s}%, ${c.l}%, 0.1)`;
+      const colBorder = `hsla(${c.hue}, ${c.s}%, ${c.l}%, 0.3)`;
+      sessionsEl.querySelectorAll('.ess-card').forEach(card => {
+        card.style.borderColor = colBorder;
+        card.style.background = colBg;
+        card.querySelector('.ess-icon').style.color = col;
+        card.querySelector('.ess-label').style.color = col;
+        // Recolor SVG fills to project color (skip white pixels used for eyes)
+        card.querySelectorAll('rect[fill]').forEach(r => {
+          if (r.getAttribute('fill') !== '#ffffff') r.setAttribute('fill', col);
+        });
+      });
+    }
   } else {
     msgEl.textContent = message;
     msgEl.style.display = '';
@@ -376,7 +394,6 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
   panelEl.className = 'terminal-panel';
   const color = getProjectColor(project.name);
   updateAppGlow(project.name);
-  panelEl.style.borderTop = `2px solid hsl(${color.hue}, ${color.s}%, ${color.l}%)`;
   terminalsContainer.appendChild(panelEl);
 
   const terminal = new Terminal({ ...TERMINAL_OPTIONS, fontSize: currentFontSize });
@@ -418,16 +435,19 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
 
   const claudeSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12" shape-rendering="crispEdges"><rect x="2" y="4" width="12" height="2" fill="currentColor"/><rect x="1" y="6" width="2" height="2" fill="currentColor"/><rect x="5" y="6" width="6" height="2" fill="currentColor"/><rect x="13" y="6" width="2" height="2" fill="currentColor"/><rect x="1" y="8" width="14" height="1" fill="currentColor"/><rect x="2" y="9" width="12" height="3" fill="currentColor"/><rect x="2" y="12" width="1" height="2" fill="currentColor"/><rect x="4" y="12" width="1" height="2" fill="currentColor"/><rect x="11" y="12" width="1" height="2" fill="currentColor"/><rect x="13" y="12" width="1" height="2" fill="currentColor"/></svg>`;
   const termSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,5 8,8 4,11"/><line x1="9" y1="11" x2="12" y2="11"/></svg>`;
+  const projColor = `hsl(${color.hue}, ${color.s}%, ${color.l}%)`;
+  const projColorBg = `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.15)`;
   const icon = isClaude
-    ? `<span class="tab-icon tab-icon-claude">${claudeSvg}</span>`
-    : `<span class="tab-icon tab-icon-terminal">${termSvg}</span>`;
+    ? `<span class="tab-icon" style="background:${projColorBg};color:${projColor}">${claudeSvg}</span>`
+    : `<span class="tab-icon" style="background:${projColorBg};color:${projColor}">${termSvg}</span>`;
   const displayLabel = `${project.name} ${num}`;
+  const dot = `<span class="tab-color-dot" style="background:${projColor}"></span>`;
 
   const tabEl = document.createElement('div');
   tabEl.className = 'tab-item';
   tabEl.dataset.testid = 'tab';
   tabEl.dataset.tabId = String(id);
-  tabEl.innerHTML = `${icon}<span class="tab-label" data-testid="tab-label">${displayLabel}</span><button class="tab-close" data-testid="tab-close">&times;</button>`;
+  tabEl.innerHTML = `${icon}<span class="tab-label" data-testid="tab-label">${displayLabel}</span>${dot}<button class="tab-close" data-testid="tab-close">&times;</button>`;
   tabBarTabs.appendChild(tabEl);
 
   tabEl.draggable = true;
@@ -576,6 +596,10 @@ function activateTab(id) {
   }
 
   session.panelEl.classList.add('active');
+  session.panelEl.classList.remove('panel-fade-in');
+  // Force reflow to restart animation
+  void session.panelEl.offsetWidth;
+  session.panelEl.classList.add('panel-fade-in');
   session.tabEl.classList.add('active');
   session.tabEl.classList.remove('tab-activity');
   activeId = id;
@@ -1913,7 +1937,9 @@ async function init() {
 
     // Apply theme setting
     const resolvedTheme = await api.appConfig.resolve('theme', null);
+    console.log('[THEME DEBUG] resolved:', resolvedTheme, '| data-theme before:', document.documentElement.getAttribute('data-theme'), '| prefers-light:', window.matchMedia('(prefers-color-scheme: light)').matches);
     applyThemeSetting(resolvedTheme || 'system');
+    console.log('[THEME DEBUG] after apply | data-theme:', document.documentElement.getAttribute('data-theme'), '| --bg-app:', getComputedStyle(document.documentElement).getPropertyValue('--bg-app'));
 
     // Listen for OS theme changes (relevant when theme is 'system')
     window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {

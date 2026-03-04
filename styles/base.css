@@ -9,18 +9,18 @@
 
 :root, [data-theme="dark"] {
   --sidebar-width: 220px;
-  --bg-app: #1a1714;
-  --bg-surface: #231f1a;
-  --bg-overlay: #2a2520;
-  --bg-deep: #15120f;
-  --border: #3a3530;
-  --border-strong: #4a4540;
-  --text-primary: #e8e0d4;
-  --text-secondary: #c8c0b4;
-  --text-dim: #8a8078;
-  --text-faint: #6a6258;
-  --text-muted: #524a42;
-  --text-subtle: #a89e94;
+  --bg-app: rgba(17, 17, 17, 0.85);
+  --bg-surface: rgba(25, 25, 25, 0.80);
+  --bg-overlay: #222222;
+  --bg-deep: #0c0c0c;
+  --border: #333333;
+  --border-strong: #444444;
+  --text-primary: #d4d4d4;
+  --text-secondary: #b0b0b0;
+  --text-dim: #7a7a7a;
+  --text-faint: #5a5a5a;
+  --text-muted: #424242;
+  --text-subtle: #949494;
   --accent: #d4943c;
   --accent-bg: rgba(212, 148, 60, 0.1);
   --accent-border: rgba(212, 148, 60, 0.2);
@@ -30,7 +30,7 @@
   --danger: #e85450;
   --warn: #e5c07b;
   --error: #e06c75;
-  --debug-source: #8a7a6a;
+  --debug-source: #7a7a8a;
   --hover-bg: rgba(255, 255, 255, 0.05);
   --active-bg: rgba(255, 255, 255, 0.08);
   --kbd-bg: rgba(255, 255, 255, 0.07);
@@ -38,7 +38,7 @@
   --overlay-bg: rgba(0, 0, 0, 0.4);
   --bell-flash: rgba(255, 200, 50, 0.3);
   --selection-bg: rgba(212, 148, 60, 0.25);
-  --tab-hover-text: #c0b8ac;
+  --tab-hover-text: #b0b0b0;
 }
 
 [data-theme="light"] {
@@ -121,8 +121,8 @@
 html, body {
   height: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg-app);
+  font-family: 'Fira Code', 'Menlo', monospace;
+  background: transparent;
   color: var(--text-primary);
 }
 
@@ -143,9 +143,8 @@ html, body {
   pointer-events: none;
   border-radius: 8px;
   box-shadow:
-    inset 0 0 60px var(--glow-color),
-    inset 0 0 120px var(--glow-color-dim),
-    0 0 30px var(--glow-color-dim);
+    inset 0 0 15px var(--glow-color),
+    inset 0 0 30px var(--glow-color-dim);
   animation: glow-breathe 4s ease-in-out infinite;
 }
 
@@ -156,7 +155,6 @@ html, body {
   display: flex;
   align-items: center;
   background: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
   padding-left: 74px;
 }
 
@@ -184,8 +182,10 @@ html, body {
   height: 100%;
   overflow-x: auto;
   -webkit-app-region: no-drag;
-  margin-left: calc(var(--sidebar-width) - 74px - 28px);
+  margin-left: calc(var(--sidebar-width) - 74px - 28px - 1px);
   transition: margin-left 0.2s ease;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
 /* App body — horizontal split */
@@ -254,7 +254,6 @@ html, body {
   padding: 0 12px;
   height: 36px;
   background: transparent;
-  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -321,6 +320,19 @@ html, body {
   height: 14px;
 }
 
+.sidebar-project-color-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 4px;
+  opacity: 0.7;
+}
+
+.sidebar-project.selected .sidebar-project-color-dot {
+  opacity: 1;
+}
+
 .sidebar-project-name {
   flex: 1;
   overflow: hidden;
@@ -355,16 +367,15 @@ html, body {
   color: var(--danger);
 }
 
-/* Sidebar project activity indicator */
-.sidebar-project.project-activity .sidebar-project-name::after {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  margin-left: 6px;
-  vertical-align: middle;
+/* Sidebar project activity indicator — pulse the color dot */
+.sidebar-project.project-activity .sidebar-project-color-dot {
+  opacity: 1;
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
 }
 
 /* Sidebar resize handle */
@@ -410,7 +421,6 @@ html, body {
   -webkit-app-region: no-drag;
   border: 1px solid var(--border);
   border-left: none;
-  border-bottom: none;
   box-sizing: border-box;
 }
 
@@ -424,8 +434,19 @@ html, body {
 }
 
 .tab-item.active {
-  background: var(--active-bg);
+  background: var(--bg-app);
   color: var(--text-primary);
+  position: relative;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--bg-app);
 }
 
 .tab-icon {
@@ -470,16 +491,23 @@ html, body {
   color: var(--danger);
 }
 
-/* Tab activity indicator */
-.tab-item.tab-activity .tab-label::after {
-  content: '';
-  display: inline-block;
+/* Tab color dot */
+.tab-color-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent);
-  margin-left: 6px;
-  vertical-align: middle;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.tab-item.active .tab-color-dot {
+  opacity: 0.8;
+}
+
+/* Tab activity — pulse the color dot */
+.tab-item.tab-activity .tab-color-dot {
+  opacity: 1;
+  animation: dot-pulse 2s ease-in-out infinite;
 }
 
 /* Tab bell flash */
@@ -521,6 +549,7 @@ html, body {
 .tab-new-btn {
   background: none;
   border: none;
+  border-bottom: 1px solid var(--border);
   color: var(--text-dim);
   font-size: 16px;
   cursor: pointer;
@@ -551,15 +580,25 @@ html, body {
   bottom: 0;
   display: none;
   background: var(--terminal-bg, var(--bg-app));
+  padding: 8px 0 0 8px;
 }
 
 @keyframes glow-breathe {
-  0%, 100% { opacity: 0.4; }
-  50%      { opacity: 0.7; }
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
 }
 
 .terminal-panel.active {
   display: flex;
+}
+
+.terminal-panel.panel-fade-in {
+  animation: panel-fade-in 0.15s ease-out;
+}
+
+@keyframes panel-fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 
@@ -775,7 +814,7 @@ html, body {
 }
 
 .shortcut-help-key {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Fira Code', 'Menlo', monospace;
   font-size: 12px;
   color: var(--text-primary);
   background: var(--kbd-bg);
@@ -920,12 +959,12 @@ html, body {
   border-radius: 4px;
   color: var(--text-primary);
   font-size: 13px;
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-family: 'Fira Code', 'Menlo', 'Monaco', 'Courier New', monospace;
   outline: none;
 }
 
 .settings-select {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Fira Code', 'Menlo', monospace;
   cursor: pointer;
 }
 
@@ -1013,6 +1052,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  width: 200px;
   padding: 24px 32px;
   background: var(--bg-sidebar);
   border: 1px solid var(--border);
@@ -1119,7 +1159,7 @@ html, body {
   flex: 1;
   overflow-y: auto;
   padding: 4px 0;
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-family: 'Fira Code', 'Menlo', 'Monaco', 'Courier New', monospace;
   font-size: 11px;
   line-height: 1.5;
 }

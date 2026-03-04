@@ -9,7 +9,7 @@ let mainWindow = null;
 let terminalService = null;
 let forceClose = false;
 
-const THEME_BACKGROUNDS = { dark: '#1a1714', light: '#f5f5f7' };
+const THEME_BACKGROUNDS = { dark: '#111111', light: '#f5f5f7' };
 
 function resolveBackgroundColor(configService) {
   if (!configService) return THEME_BACKGROUNDS.dark;
@@ -39,6 +39,9 @@ function createMainWindow(windowStateService, configService) {
     titleBarStyle: isMac ? 'hiddenInset' : undefined,
     trafficLightPosition: isMac ? { x: 12, y: 12 } : undefined,
     backgroundColor: resolveBackgroundColor(configService),
+    vibrancy: isMac ? 'under-window' : undefined,
+    visualEffectState: isMac ? 'active' : undefined,
+    transparent: isMac,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
