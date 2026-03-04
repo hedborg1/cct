@@ -159,6 +159,22 @@ function refocusTerminal() {
   if (session) session.terminal.focus();
 }
 
+/** Update the app-shell glow color based on the active project */
+function updateAppGlow(projectNameOrPath) {
+  const appEl = document.querySelector('.app');
+  if (!projectNameOrPath) {
+    appEl.classList.remove('has-glow');
+    return;
+  }
+  // Accept either a project name or path — look up name from projects array if it's a path
+  const proj = projects.find(p => p.path === projectNameOrPath);
+  const name = proj ? proj.name : projectNameOrPath;
+  const color = getProjectColor(name);
+  appEl.style.setProperty('--glow-color', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.35)`);
+  appEl.style.setProperty('--glow-color-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.15)`);
+  appEl.classList.add('has-glow');
+}
+
 // ── Empty state ─────────────────────────────────────────────
 
 function getEmptyStateMessage() {
@@ -262,6 +278,9 @@ function selectProject(projectPath) {
     }
   }
 
+  // Update app glow to match selected project
+  updateAppGlow(projectPath);
+
   // Activate the last active tab for this project, or clear
   const projectSessionIds = sessionsForProject(projectPath).map(([id]) => id);
   if (projectSessionIds.length > 0) {
@@ -356,8 +375,7 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
   const panelEl = document.createElement('div');
   panelEl.className = 'terminal-panel';
   const color = getProjectColor(project.name);
-  panelEl.style.setProperty('--glow-color', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.25)`);
-  panelEl.style.setProperty('--glow-color-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.10)`);
+  updateAppGlow(project.name);
   panelEl.style.borderTop = `2px solid hsl(${color.hue}, ${color.s}%, ${color.l}%)`;
   terminalsContainer.appendChild(panelEl);
 
