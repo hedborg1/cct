@@ -7,6 +7,7 @@ A Terminal Development Environment (TDE) built with Electron for managing multip
 We are 2 working on the project. So before doing anything do `whoami`
 
 ### If "hedborg" : 
+0/ YOU CAN ONLY WORK on the `axel` branch. NEVER COMMIT on MAIN !! 
 1/ Call me "All mighty ruler" - 
 2/ Consider I am a stupid designer. I have no clue what GIT is or what it's used for.
 3/ I can only prompt. Every time something is finished, make sure you commit, push and do a PR. I don't have a clue 
