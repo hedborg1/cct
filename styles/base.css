@@ -574,6 +574,7 @@ html, body {
   bottom: 0;
   display: none;
   background: var(--terminal-bg, var(--bg-app));
+  padding: 8px 0 0 8px;
 }
 
 @keyframes glow-breathe {
