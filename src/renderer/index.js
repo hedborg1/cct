@@ -197,6 +197,20 @@ function updateEmptyState() {
   if (isNoSessions) {
     msgEl.style.display = 'none';
     sessionsEl.style.display = 'flex';
+    // Color empty state cards with project color
+    const proj = projects.find(p => p.path === selectedProjectPath);
+    if (proj) {
+      const c = getProjectColor(proj.name);
+      const col = `hsl(${c.hue}, ${c.s}%, ${c.l}%)`;
+      const colBg = `hsla(${c.hue}, ${c.s}%, ${c.l}%, 0.1)`;
+      const colBorder = `hsla(${c.hue}, ${c.s}%, ${c.l}%, 0.3)`;
+      sessionsEl.querySelectorAll('.ess-card').forEach(card => {
+        card.style.borderColor = colBorder;
+        card.style.background = colBg;
+        card.querySelector('.ess-icon').style.color = col;
+        card.querySelector('.ess-label').style.color = col;
+      });
+    }
   } else {
     msgEl.textContent = message;
     msgEl.style.display = '';
