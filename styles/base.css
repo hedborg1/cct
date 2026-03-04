@@ -382,7 +382,7 @@ html, body {
 .sidebar-resize-handle {
   width: 4px;
   cursor: col-resize;
-  background: transparent;
+  background: var(--bg-surface);
   flex-shrink: 0;
   position: relative;
   z-index: 10;
