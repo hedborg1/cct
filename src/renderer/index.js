@@ -89,9 +89,9 @@ const projects = [];
 // ── Theme helpers ────────────────────────────────────────────
 
 const DARK_TERMINAL_THEME = {
-  background: '#1a1714',
-  foreground: '#e8e0d4',
-  cursor: '#e8e0d4',
+  background: '#111111',
+  foreground: '#d4d4d4',
+  cursor: '#d4d4d4',
   selectionBackground: 'rgba(212, 148, 60, 0.25)',
   scrollbarSliderBackground: 'rgba(255, 255, 255, 0.2)',
   scrollbarSliderHoverBackground: 'rgba(255, 255, 255, 0.35)',
@@ -170,8 +170,8 @@ function updateAppGlow(projectNameOrPath) {
   const proj = projects.find(p => p.path === projectNameOrPath);
   const name = proj ? proj.name : projectNameOrPath;
   const color = getProjectColor(name);
-  appEl.style.setProperty('--glow-color', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.35)`);
-  appEl.style.setProperty('--glow-color-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.15)`);
+  appEl.style.setProperty('--glow-color', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.55)`);
+  appEl.style.setProperty('--glow-color-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.25)`);
   appEl.classList.add('has-glow');
 }
 
@@ -1913,7 +1913,9 @@ async function init() {
 
     // Apply theme setting
     const resolvedTheme = await api.appConfig.resolve('theme', null);
+    console.log('[THEME DEBUG] resolved:', resolvedTheme, '| data-theme before:', document.documentElement.getAttribute('data-theme'), '| prefers-light:', window.matchMedia('(prefers-color-scheme: light)').matches);
     applyThemeSetting(resolvedTheme || 'system');
+    console.log('[THEME DEBUG] after apply | data-theme:', document.documentElement.getAttribute('data-theme'), '| --bg-app:', getComputedStyle(document.documentElement).getPropertyValue('--bg-app'));
 
     // Listen for OS theme changes (relevant when theme is 'system')
     window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
