@@ -159,6 +159,22 @@ function refocusTerminal() {
   if (session) session.terminal.focus();
 }
 
+/** Update the app-shell glow color based on the active project */
+function updateAppGlow(projectNameOrPath) {
+  const appEl = document.querySelector('.app');
+  if (!projectNameOrPath) {
+    appEl.classList.remove('has-glow');
+    return;
+  }
+  // Accept either a project name or path — look up name from projects array if it's a path
+  const proj = projects.find(p => p.path === projectNameOrPath);
+  const name = proj ? proj.name : projectNameOrPath;
+  const color = getProjectColor(name);
+  appEl.style.setProperty('--glow-color', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.35)`);
+  appEl.style.setProperty('--glow-color-dim', `hsla(${color.hue}, ${color.s}%, ${color.l}%, 0.15)`);
+  appEl.classList.add('has-glow');
+}
+
 // ── Empty state ─────────────────────────────────────────────
 
 function getEmptyStateMessage() {
@@ -202,7 +218,15 @@ function renderSidebar() {
 
     const sessionCount = countSessionsForProject(project.path);
 
+    const color = getProjectColor(project.name);
+    const folderColor = `hsl(${color.hue}, ${color.s}%, ${color.l + 10}%)`;
+
     el.innerHTML = `
+      <span class="sidebar-project-icon" style="color: ${folderColor}">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M1.5 3A1.5 1.5 0 0 1 3 1.5h3.3a1.5 1.5 0 0 1 1.1.5L8.6 3.5H13A1.5 1.5 0 0 1 14.5 5v7.5A1.5 1.5 0 0 1 13 14H3a1.5 1.5 0 0 1-1.5-1.5V3z"/>
+        </svg>
+      </span>
       <span class="sidebar-project-name">${project.name}</span>
       <span class="sidebar-project-count" data-testid="session-count">${sessionCount}</span>
       <button class="sidebar-project-remove" data-testid="remove-project-btn">&times;</button>
@@ -253,6 +277,9 @@ function selectProject(projectPath) {
       s.tabEl.classList.remove('active');
     }
   }
+
+  // Update app glow to match selected project
+  updateAppGlow(projectPath);
 
   // Activate the last active tab for this project, or clear
   const projectSessionIds = sessionsForProject(projectPath).map(([id]) => id);
@@ -347,6 +374,9 @@ async function createSession(type = 'claude', { claudeSessionId } = {}) {
 
   const panelEl = document.createElement('div');
   panelEl.className = 'terminal-panel';
+  const color = getProjectColor(project.name);
+  updateAppGlow(project.name);
+  panelEl.style.borderTop = `2px solid hsl(${color.hue}, ${color.s}%, ${color.l}%)`;
   terminalsContainer.appendChild(panelEl);
 
   const terminal = new Terminal({ ...TERMINAL_OPTIONS, fontSize: currentFontSize });
@@ -1034,6 +1064,7 @@ function toggleSidebar() {
     appBody.classList.add('sidebar-autohide', 'sidebar-transitions');
     sidebarEl.classList.remove('sidebar-revealed');
     sidebarEl.style.width = '0';
+    document.documentElement.style.setProperty('--sidebar-width', '0px');
     sidebarRevealed = false;
   } else {
     // Switch to pinned — restore sidebar width
@@ -1045,6 +1076,7 @@ function toggleSidebar() {
     appBody.classList.remove('sidebar-autohide');
     sidebarEl.classList.remove('sidebar-revealed');
     sidebarEl.style.width = sidebarWidth + 'px';
+    document.documentElement.style.setProperty('--sidebar-width', sidebarWidth + 'px');
     sidebarRevealed = false;
   }
 
@@ -1581,6 +1613,7 @@ function initSidebarResize() {
     const delta = e.clientX - startX;
     const newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, startWidth + delta));
     sidebarEl.style.width = newWidth + 'px';
+    document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
     // Refit active terminal
     if (activeId) {
       const session = sessions.get(activeId);
@@ -1597,6 +1630,7 @@ function initSidebarResize() {
     // Persist sidebar width and update local variable
     const finalWidth = Math.round(sidebarEl.getBoundingClientRect().width);
     sidebarWidth = finalWidth;
+    document.documentElement.style.setProperty('--sidebar-width', finalWidth + 'px');
     if (api.windowState) {
       api.windowState.setSidebarWidth(finalWidth);
     }
@@ -1865,9 +1899,11 @@ async function init() {
     if (sidebarMode === 'pinned') {
       document.querySelector('.app-body').classList.remove('sidebar-autohide');
       sidebarEl.style.width = sidebarWidth + 'px';
+      document.documentElement.style.setProperty('--sidebar-width', sidebarWidth + 'px');
     } else {
       // Autohide: collapse to 0
       sidebarEl.style.width = '0';
+      document.documentElement.style.setProperty('--sidebar-width', '0px');
     }
     const savedFontSize = await api.windowState.getFontSize();
     if (savedFontSize && savedFontSize >= MIN_FONT_SIZE && savedFontSize <= MAX_FONT_SIZE) {
