@@ -367,16 +367,15 @@ html, body {
   color: var(--danger);
 }
 
-/* Sidebar project activity indicator */
-.sidebar-project.project-activity .sidebar-project-name::after {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  margin-left: 6px;
-  vertical-align: middle;
+/* Sidebar project activity indicator — pulse the color dot */
+.sidebar-project.project-activity .sidebar-project-color-dot {
+  opacity: 1;
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
 }
 
 /* Sidebar resize handle */
