@@ -492,16 +492,23 @@ html, body {
   color: var(--danger);
 }
 
-/* Tab activity indicator */
-.tab-item.tab-activity .tab-label::after {
-  content: '';
-  display: inline-block;
+/* Tab color dot */
+.tab-color-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent);
-  margin-left: 6px;
-  vertical-align: middle;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.tab-item.active .tab-color-dot {
+  opacity: 0.8;
+}
+
+/* Tab activity — pulse the color dot */
+.tab-item.tab-activity .tab-color-dot {
+  opacity: 1;
+  animation: dot-pulse 2s ease-in-out infinite;
 }
 
 /* Tab bell flash */
