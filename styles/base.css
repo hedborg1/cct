@@ -143,9 +143,8 @@ html, body {
   pointer-events: none;
   border-radius: 8px;
   box-shadow:
-    inset 0 0 30px var(--glow-color),
-    inset 0 0 60px var(--glow-color),
-    inset 0 0 100px var(--glow-color-dim);
+    inset 0 0 15px var(--glow-color),
+    inset 0 0 30px var(--glow-color-dim);
   animation: glow-breathe 4s ease-in-out infinite;
 }
 
