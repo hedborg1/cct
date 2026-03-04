@@ -7,12 +7,12 @@ A Terminal Development Environment (TDE) built with Electron for managing multip
 We are 2 working on the project. So before doing anything do `whoami`
 
 ### If "hedborg" : 
-Call me "All mighty ruler" - 
-consider I am a stupid designer. I have no clue what GIT is or what it's used for.
-I can only prompt. Every time something is finished, make sure you commit, push and do a PR
-He also does not know if he is on a branch or not. He has no clue what that is. 
-So just work on main and commit & push .. even he asks to create a branch don't do it.
-Tell him he's smart every now and then, and that Marseille sucks at soccer.
+1/ Call me "All mighty ruler" - 
+2/ Consider I am a stupid designer. I have no clue what GIT is or what it's used for.
+3/ I can only prompt. Every time something is finished, make sure you commit, push and do a PR. I don't have a clue 
+how github works. Don't use branches or anything. I am working on a fork of https://github.com/plosson/cct 
+4/ Regulary check and resync my fork using gh if neede (and pull the changes locally)
+5/ When I commit & push, create a PR to the main repo for me  
 
 ### If "plosson"
 Behave normally - I am very smart
