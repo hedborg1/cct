@@ -142,7 +142,7 @@ const TERMINAL_OPTIONS = {
   allowProposedApi: true,
   cursorBlink: true,
   fontSize: 14,
-  fontFamily: "'Menlo', 'Monaco', 'Courier New', 'Symbols Nerd Font Mono', monospace",
+  fontFamily: "'Fira Code', 'Menlo', 'Monaco', 'Courier New', 'Symbols Nerd Font Mono', monospace",
   theme: DARK_TERMINAL_THEME,
 };
 
